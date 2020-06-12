@@ -1,0 +1,6 @@
+hangman
+school
+korea
+student
+teacher
+write
