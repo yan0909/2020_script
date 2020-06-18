@@ -1,0 +1,21 @@
+http://openapi.animal.go.kr/openapi/service/rest/abandonmentPublicSrvc/abandonmentPublic?bgnde=20140301&endde=20140430&pageNo=1&numOfRows=10&ServiceKey=Ig8HtVmi88SKnPQ1jkAX6g4Fwsvan92cvmE3qEKt16mVtT4KE05lE70WxM8OCjE%2BAetX8NJXrNY6qDuiiYJ71Q%3D%3D")
+
+
+bgnde 시작일 20150601
+endde 종료일 20140630
+upr_cd 시도코드
+org_cd 시군구코드
+numOfRows 개수 4
+
+
+popfile 이미지 주소
+happenDt 접수일 20140301
+happenPlace 발견장소
+kindCd colorCd age sexCd 품종 색상 나이 성별(MFQ:미상)
+specialMark
+careNm 보호소이름
+careTel 보호소 전화
+processState 상태
+orgNm 지역명 (도, 시군구)
+
+20140630
