@@ -55,7 +55,11 @@ def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 10):
     url = url + "&pageNo=1"
     url = url + "&numOfRows=" + str(numOfRows)
     url = url + "&ServiceKey=" + key
-    return requests.get(url).text
+    responseText = requests.get(url).text
+    fp = open("data.xml", "w", encoding="utf8")
+    fp.write(responseText)
+    fp.close()
+    return responseText
 
 def ParseXML(text):
     a = elemTree.fromstring(text)
