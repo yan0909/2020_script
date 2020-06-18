@@ -32,7 +32,7 @@ def DownloadImage(url, width = None, height = None):
 
     return image
 
-def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 10):
+def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 16):
     # bgnde 시작일 20150601
     # endde 종료일 20140630
     # upr_cd 시도코드
@@ -96,6 +96,7 @@ def OnClickedBtnSearch():
         data['careNm'] = item.find("careNm").text
         data['careTel'] = item.find("careTel").text
         data['processState'] = item.find("processState").text
+        data['orgNm'] = item.find("orgNm").text
         datas.append(data)
 
     for i in range(frameCount):
@@ -103,6 +104,8 @@ def OnClickedBtnSearch():
         guiDic[frames[i]]['popfile'].configure(image=img, width=330, height= 330)
         guiDic[frames[i]]['popfile'].image=img
         guiDic[frames[i]]['popfile'].pack()
+        guiDic[frames[i]]['orgNm'].configure(text = "지역 : " + datas[i]['orgNm'])
+        guiDic[frames[i]]['orgNm'].pack()
         guiDic[frames[i]]['happenDt'].configure(text = "접수일 : " + datas[i]['happenDt'])
         guiDic[frames[i]]['happenDt'].pack()
         guiDic[frames[i]]['happenPlace'].configure(text = "발견 장소 : " + datas[i]['happenPlace'])
@@ -187,13 +190,14 @@ f16 = Frame(window, bg='white smoke')
 notebook.add(f16, text='16')
 
 
-frames = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10]
+frames = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16]
 frameCount = len(frames)
 
 guiDic = {}
 for frame in frames:
     guiDic[frame] = {}
     guiDic[frame]['popfile'] = Label(frame)
+    guiDic[frame]['orgNm'] = Label(frame)
     guiDic[frame]['happenDt'] = Label(frame)
     guiDic[frame]['happenPlace'] = Label(frame)
     guiDic[frame]['kindCd'] = Label(frame)
