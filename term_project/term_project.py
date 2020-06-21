@@ -11,6 +11,7 @@ import xml.etree.ElementTree as elemTree
 import os
 import folium
 import webbrowser
+import spam
 
 def Pressd():
     map_osm = folium.Map(location=[], zoom_start=13)
@@ -47,7 +48,6 @@ def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 16):
     # endDt = '20140630'
 
     url = "http://openapi.animal.go.kr/openapi/service/rest/abandonmentPublicSrvc/abandonmentPublic"
-    key = "Ig8HtVmi88SKnPQ1jkAX6g4Fwsvan92cvmE3qEKt16mVtT4KE05lE70WxM8OCjE%2BAetX8NJXrNY6qDuiiYJ71Q%3D%3D"
     url = url + "?bgnde=" + str(startDt) + "&endde=" + str(endDt)
 
     if( upr_cd != None ):
@@ -58,7 +58,8 @@ def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 16):
 
     url = url + "&pageNo=1"
     url = url + "&numOfRows=" + str(numOfRows)
-    url = url + "&ServiceKey=" + key
+    
+    url = spam.GetAuthorize(url) # spam 이용해서 API Key 받기
     responseText = requests.get(url).text
     fp = open("data.xml", "w", encoding="utf8")
     fp.write(responseText)
