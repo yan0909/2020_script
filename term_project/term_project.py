@@ -9,6 +9,7 @@ import requests
 from xml.etree.ElementTree import parse
 import xml.etree.ElementTree as elemTree
 import os
+import os.path
 import folium
 import webbrowser
 import spam
@@ -37,7 +38,7 @@ def DownloadImage(url, width = None, height = None):
 
     return image
 
-def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 16):
+def RequestInfo(startDt, endDt, org_cd = None, kind_cd = None, numOfRows = 16):
     # bgnde 시작일 20150601
     # endde 종료일 20140630
     # upr_cd 시도코드
@@ -50,11 +51,11 @@ def RequestInfo(startDt, endDt, upr_cd = None, org_cd = None, numOfRows = 16):
     url = "http://openapi.animal.go.kr/openapi/service/rest/abandonmentPublicSrvc/abandonmentPublic"
     url = url + "?bgnde=" + str(startDt) + "&endde=" + str(endDt)
 
-    if( upr_cd != None ):
-        url = url + "&upr_cd=" + str(upr_cd)
-
     if( org_cd != None ):
         url = url + "&org_cd=" + str(org_cd)
+
+    if( kind_cd != None ):
+        url = url + "&upkind=" + str(kind_cd)
 
     url = url + "&pageNo=1"
     url = url + "&numOfRows=" + str(numOfRows)
@@ -70,6 +71,27 @@ def ParseXML(text):
     a = elemTree.fromstring(text)
     return a
 
+def LoadBookMark(fileName):
+    # 없으면 새로 생성
+    if( os.path.isfile(fileName) == False ):
+        root = elemTree.Element('response')
+        root.append( elemTree.Element('body') )
+        root.find('body').append( elemTree.Element('items') )
+        return root
+
+    f = open(fileName, 'r', encoding='utf8')
+    s = f.read()
+    return ParseXML(s)
+
+def SaveBookMark(tree, fileName):
+    root = elemTree.ElementTree(tree)
+    root.write(fileName, encoding='utf8')
+
+def AddBookMark(elem):
+    root = LoadBookMark('bookmark.xml')
+    root.find('body').find('items').append(elem)
+    SaveBookMark(root, 'bookmark.xml')
+
 def GetSexString(sexCd):
     if( sexCd == 'M' ):
         return '수컷'
@@ -77,20 +99,14 @@ def GetSexString(sexCd):
         return '암컷'
     return '성별 미상'
 
-def OnClickedBtnSearch():
-    bgnde = e1.get()
-    endde = e2.get()
-    upr_cd = e3.get() if len(e3.get()) > 0 else None
-    org_cd = e4.get() if len(e4.get()) > 0 else None
-
-    response = RequestInfo(bgnde, endde, upr_cd, org_cd)
-    root = ParseXML(response)
-
+def ShowData(root, isBookMark):
+    global curTab
     # 데이터 정리
     items = root.find('body').find('items').findall('item')
     datas = []
     for item in items:
         data = {}
+        # data['desertionNo'] = item.find('desertionNo').text
         data['popfile'] = item.find("popfile").text
         data['happenDt'] = item.find("happenDt").text
         data['happenPlace'] = item.find("happenPlace").text
@@ -106,7 +122,21 @@ def OnClickedBtnSearch():
         datas.append(data)
 
     # GUI 세팅
-    for i in range(frameCount):
+    for i in range( frameCount ):
+        if(i >= len(datas)):
+            guiDic[frames[i]]['popfile'].pack_forget()
+            guiDic[frames[i]]['orgNm'].pack_forget()
+            guiDic[frames[i]]['happenDt'].pack_forget()
+            guiDic[frames[i]]['happenPlace'].pack_forget()
+            guiDic[frames[i]]['kindCd'].pack_forget()
+            guiDic[frames[i]]['specialMark'].pack_forget()
+            guiDic[frames[i]]['careNm'].pack_forget()
+            guiDic[frames[i]]['processState'].pack_forget()
+            guiDic[frames[i]]['map'].pack_forget()
+            guiDic[frames[i]]['bookmarkSep'].pack_forget()
+            guiDic[frames[i]]['bookmark'].pack_forget()
+            continue
+
         img = DownloadImage(datas[i]['popfile'], 330, 330)
         guiDic[frames[i]]['popfile'].configure(image=img, width=330, height= 330)
         guiDic[frames[i]]['popfile'].image=img
@@ -127,10 +157,30 @@ def OnClickedBtnSearch():
         guiDic[frames[i]]['processState'].pack()
         guiDic[frames[i]]['map'].configure(command = lambda : OpenWeb(datas[i]['careNm']))
         guiDic[frames[i]]['map'].pack()
+        guiDic[frames[i]]['bookmarkSep'].pack()
+        guiDic[frames[i]]['bookmark'].configure(command = lambda : AddBookMark(items[curTab]) )
+        guiDic[frames[i]]['bookmark'].pack()
 
+        if(isBookMark):
+            guiDic[frames[i]]['bookmark'].pack_forget()
 
+    i = 0
 
+def OnClickedBtnSearch():
+    global orgCdMap, kindCdMap, cbstr1, cbstr2
+    bgnde = e1.get()
+    endde = e2.get()
+    # upr_cd = e3.get() if len(e3.get()) > 0 else None
+    org_cd = orgCdMap[cbstr1.get()] #e4.get() if len(e4.get()) > 0 else None
+    kind_cd = kindCdMap[cbstr2.get()]
 
+    response = RequestInfo(bgnde, endde, org_cd, kind_cd)
+    root = ParseXML(response)
+    ShowData(root, isBookMark= False)
+
+def OnClickedBtnShowBookMark():
+    root = LoadBookMark('bookmark.xml')
+    ShowData(root, isBookMark= True)
 
 window = Tk()
 window.geometry("700x800")
@@ -145,7 +195,8 @@ label_title.grid(row=0, column=1)
 l1 = Label(f0, text="검색시작일")
 l2 = Label(f0, text="검색종료일")
 l3 = Label(f0, text="시도")
-l4 = Label(f0, text="군/구")
+l4 = Label(f0, text="종류")
+
 l1.place(x=0, y=30)
 l2.place(x=0, y=60)
 l3.place(x=0, y=90)
@@ -153,51 +204,103 @@ l4.place(x=0, y=120)
 
 e1 = Entry(f0)
 e2 = Entry(f0)
-e3 = Entry(f0)
-e4 = Entry(f0)
 e1.place(x=120, y=30)
 e2.place(x=120, y=60)
-e3.place(x=120, y=90)
-e4.place(x=120, y=120)
+
+
+orgCdMap = {}
+orgCdMap['전체'] = None
+orgCdMap['서울특별시'] = '6110000'
+orgCdMap['부산광역시'] = '6260000'
+orgCdMap['대구광역시'] = '6270000'
+orgCdMap['인천광역시'] = '6280000'
+orgCdMap['광주광역시'] = '6290000'
+orgCdMap['세종특별자치시'] = '5690000'
+orgCdMap['대전광역시'] = '6300000'
+orgCdMap['울산광역시'] = '6310000'
+orgCdMap['경기도'] = '6410000'
+orgCdMap['강원도'] = '6420000'
+
+kindCdMap = {}
+kindCdMap['전체'] = None
+kindCdMap['개'] = '417000'
+kindCdMap['고양이'] = '422400'
+kindCdMap['기타'] = '429900'
+
+cbstr1 = StringVar()
+cb1 = tkinter.ttk.Combobox(f0, width = 12 , textvariable = cbstr1 )
+cb1['values'] = ['전체', '서울특별시' , '부산광역시' , '대구광역시', '인천광역시', '광주광역시', '세종특별자치시', '대전광역시', '울산광역시', '경기도', '강원도']
+cb1.current(0)
+cb1.place(x=120, y=90)
+
+cbstr2 = StringVar()
+cb2 = tkinter.ttk.Combobox(f0, width = 12 , textvariable = cbstr2 )
+cb2['values'] = ['전체', '개' , '고양이' , '기타']
+cb2.current(0)
+cb2.place(x=120, y=120)
 
 b1 = Button(f0, text="검색", width=10, command=OnClickedBtnSearch)
 b1.place(x=120, y=150)
 
+b2 = Button(f0, text="북마크 보기", command=OnClickedBtnShowBookMark)
+b2.place(x=120, y=185)
+
 notebook = tkinter.ttk.Notebook(window, width=350, height=700)
 notebook.pack(side=RIGHT, padx=20)
 
+curTab = 0
+
+def SetCurrentTab(index):
+    global curTab
+    curTab = index
 
 f1 = Frame(window, bg='white smoke')
+f1.bind("<Visibility>", func= (lambda e : SetCurrentTab(0)))
 notebook.add(f1, text='1')
 f2 = Frame(window, bg='white smoke')
+f2.bind("<Visibility>", func= (lambda e : SetCurrentTab(1)))
 notebook.add(f2, text='2')
 f3 = Frame(window, bg='white smoke')
+f3.bind("<Visibility>", func= (lambda e : SetCurrentTab(2)))
 notebook.add(f3, text='3')
 f4 = Frame(window, bg='white smoke')
+f4.bind("<Visibility>", func= (lambda e : SetCurrentTab(3)))
 notebook.add(f4, text='4')
 f5 = Frame(window, bg='white smoke')
+f5.bind("<Visibility>", func= (lambda e : SetCurrentTab(4)))
 notebook.add(f5, text='5')
 f6 = Frame(window, bg='white smoke')
+f6.bind("<Visibility>", func= (lambda e : SetCurrentTab(5)))
 notebook.add(f6, text='6')
 f7 = Frame(window, bg='white smoke')
+f7.bind("<Visibility>", func= (lambda e : SetCurrentTab(6)))
 notebook.add(f7, text='7')
 f8 = Frame(window, bg='white smoke')
+f8.bind("<Visibility>", func= (lambda e : SetCurrentTab(7)))
 notebook.add(f8, text='8')
 f9 = Frame(window, bg='white smoke')
+f9.bind("<Visibility>", func= (lambda e : SetCurrentTab(8)))
 notebook.add(f9, text='9')
 f10 = Frame(window, bg='white smoke')
+f10.bind("<Visibility>", func= (lambda e : SetCurrentTab(9)))
 notebook.add(f10, text='10')
 f11 = Frame(window, bg='white smoke')
+f11.bind("<Visibility>", func= (lambda e : SetCurrentTab(10)))
 notebook.add(f11, text='11')
 f12 = Frame(window, bg='white smoke')
+f12.bind("<Visibility>", func= (lambda e : SetCurrentTab(11)))
 notebook.add(f12, text='12')
 f13 = Frame(window, bg='white smoke')
+f13.bind("<Visibility>", func= (lambda e : SetCurrentTab(12)))
 notebook.add(f13, text='13')
 f14 = Frame(window, bg='white smoke')
+f14.bind("<Visibility>", func= (lambda e : SetCurrentTab(13)))
 notebook.add(f14, text='14')
 f15 = Frame(window, bg='white smoke')
+f15.bind("<Visibility>", func= (lambda e : SetCurrentTab(14)))
 notebook.add(f15, text='15')
 f16 = Frame(window, bg='white smoke')
+f16.bind("<Visibility>", func= (lambda e : SetCurrentTab(15)))
 notebook.add(f16, text='16')
 
 
@@ -216,6 +319,8 @@ for frame in frames:
     guiDic[frame]['careNm'] = Label(frame)
     guiDic[frame]['processState'] = Label(frame)
     guiDic[frame]['map'] = Button(frame, text='지도에서 보호소 찾기')
+    guiDic[frame]['bookmarkSep'] = Label(frame, text='   ')
+    guiDic[frame]['bookmark'] = Button(frame, text='북마크에 추가')
 
 
 # image1 = DownloadImage("http://www.animal.go.kr/files/shelter/2020/06/202006091206924_s.jpg")

@@ -2,11 +2,12 @@ http://openapi.animal.go.kr/openapi/service/rest/abandonmentPublicSrvc/abandonme
 
 key = "Ig8HtVmi88SKnPQ1jkAX6g4Fwsvan92cvmE3qEKt16mVtT4KE05lE70WxM8OCjE%2BAetX8NJXrNY6qDuiiYJ71Q%3D%3D"
 
-
+desertionNo 번호
 bgnde 시작일 20150601
 endde 종료일 20140630
 upr_cd 시도코드
 org_cd 시군구코드
+upkind 축종코드
 numOfRows 개수 4
 
 
