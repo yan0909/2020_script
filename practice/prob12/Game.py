@@ -1,10 +1,28 @@
+from tkinter import *
+from tkinter import font
 from Card import *
 from Player import *
 import inspect
 
 class Game:
-
     def __init__(self):
+        self.window = Tk()
+        self.window.title("Dori")
+        self.window.geometry("800x600")
+        self.window.configure(bg="green")
+
+        bgP = PhotoImage(file="resource/doriCards/table.gif")
+        bgImage = Label(self.window, image=bgP)
+        bgImage.pack()
+
+        self.fontstyle = font.Font(self.window, size=24, weight='bold', family='Consolas')
+        self.fontstyle2 = font.Font(self.window, size=16, weight='bold', family='Consolas')
+        self.player = Player("player")
+        self.dealer = Player("dealer")
+        self.playerMoney = 1000
+        #self.initialize()
+
+
         l = []
         l.append(Card(16, isVisible=True))
         l.append(Card(18, isVisible=True))
@@ -19,7 +37,10 @@ class Game:
 
         combos.sort(key= lambda x : x['power'], reverse=False)
         print(self.GetComboString(combos[0]))
-        pass
+
+        self.window.mainloop()
+
+
 
     # 콤보 텍스트 반환
     def GetComboString(self, combo):
