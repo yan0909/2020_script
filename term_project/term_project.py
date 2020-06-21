@@ -18,6 +18,10 @@ def Pressd():
     map_osm.save('osm.html')
     webbrowser.open_new('osm.html')
 
+def OpenWeb(url):
+    print('https://map.naver.com/v5/search/' + url)
+    webbrowser.open('https://map.naver.com/v5/search/' + url)
+
 def DownloadImage(url, width = None, height = None):
     with urllib.request.urlopen(url) as u:
         raw_data = u.read()
@@ -81,6 +85,7 @@ def OnClickedBtnSearch():
     response = RequestInfo(bgnde, endde, upr_cd, org_cd)
     root = ParseXML(response)
 
+    # 데이터 정리
     items = root.find('body').find('items').findall('item')
     datas = []
     for item in items:
@@ -99,6 +104,7 @@ def OnClickedBtnSearch():
         data['orgNm'] = item.find("orgNm").text
         datas.append(data)
 
+    # GUI 세팅
     for i in range(frameCount):
         img = DownloadImage(datas[i]['popfile'], 330, 330)
         guiDic[frames[i]]['popfile'].configure(image=img, width=330, height= 330)
@@ -118,6 +124,10 @@ def OnClickedBtnSearch():
         guiDic[frames[i]]['careNm'].pack()
         guiDic[frames[i]]['processState'].configure(text = "상태 : " + datas[i]['processState'])
         guiDic[frames[i]]['processState'].pack()
+        guiDic[frames[i]]['map'].configure(command = lambda : OpenWeb(datas[i]['careNm']))
+        guiDic[frames[i]]['map'].pack()
+
+
 
 
 
@@ -204,6 +214,7 @@ for frame in frames:
     guiDic[frame]['specialMark'] = Label(frame)
     guiDic[frame]['careNm'] = Label(frame)
     guiDic[frame]['processState'] = Label(frame)
+    guiDic[frame]['map'] = Button(frame, text='지도에서 보호소 찾기')
 
 
 # image1 = DownloadImage("http://www.animal.go.kr/files/shelter/2020/06/202006091206924_s.jpg")
