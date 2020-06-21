@@ -13,6 +13,11 @@ import os.path
 import folium
 import webbrowser
 import spam
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 def Pressd():
     map_osm = folium.Map(location=[], zoom_start=13)
@@ -182,6 +187,56 @@ def OnClickedBtnShowBookMark():
     root = LoadBookMark('bookmark.xml')
     ShowData(root, isBookMark= True)
 
+def OnClickedBtnSendBookMark():
+    msg = MIMEMultipart()
+
+    ID = 'silverk0909@gmail.com'
+    PW = 'a7621718'
+    SEND = 'silverk0909@gmail.com'
+
+    msg['From'] = ID
+    msg['To'] = SEND
+    msg['Subject'] = '유기동물 조회 서비스 북마크 정보'
+
+
+    root = LoadBookMark('bookmark.xml')
+    items = root.find('body').find('items').findall('item')
+    body = '북마크 파일입니다. \n\n'
+    for item in items:
+        body += "이미지 링크 : " + item.find('popfile').text + '\n'
+        body += "지역 : " + item.find('orgNm').text + '\n'
+        body += "접수일 : " + item.find('happenDt').text + '\n'
+        body += "발견 장소 : " + item.find('happenPlace').text + '\n'
+        body += item.find('kindCd').text + " " + item.find('colorCd').text + " " + item.find('age').text + '\n'
+        body += "특징 : " + item.find('specialMark').text + '\n'
+        body += "보호소 : " + item.find('careNm').text + " (" + item.find('careTel').text + ")" + '\n'
+        body += "상태 : " + item.find('processState').text + '\n'
+        body += '\n\n\n\n'
+
+    msg.attach(MIMEText(body,'plain'))
+
+    # 첨부
+    filename='bookmark.xml'  
+    attachment = open(filename,'rb')
+
+    part = MIMEBase('application','octet-stream')
+    part.set_payload((attachment).read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition',"attachment; filename= "+filename)
+    msg.attach(part)
+
+    # 보내기
+    text = msg.as_string()
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login(ID,PW)
+
+    server.sendmail(ID,SEND,text)
+    server.quit()
+
+
+
+
 window = Tk()
 window.geometry("700x800")
 window.title("유기동물 조회 서비스")
@@ -239,11 +294,14 @@ cb2['values'] = ['전체', '개' , '고양이' , '기타']
 cb2.current(0)
 cb2.place(x=120, y=120)
 
-b1 = Button(f0, text="검색", width=10, command=OnClickedBtnSearch)
+b1 = Button(f0, text="검색", width=14, command=OnClickedBtnSearch)
 b1.place(x=120, y=150)
 
-b2 = Button(f0, text="북마크 보기", command=OnClickedBtnShowBookMark)
-b2.place(x=120, y=185)
+b2 = Button(f0, text="북마크 보기", width=14, command=OnClickedBtnShowBookMark)
+b2.place(x=120, y=195)
+
+b3 = Button(f0, text="메일 보내기", width=14, command=OnClickedBtnSendBookMark)
+b3.place(x=120, y=195+45)
 
 notebook = tkinter.ttk.Notebook(window, width=350, height=700)
 notebook.pack(side=RIGHT, padx=20)
