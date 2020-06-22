@@ -18,6 +18,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+import telepot
 
 def Pressd():
     map_osm = folium.Map(location=[], zoom_start=13)
@@ -392,5 +393,70 @@ for frame in frames:
 
 # image4 = DownloadImage("http://www.animal.go.kr/files/shelter/2020/06/202006091206843_s.jpg")
 # Label(f4, image=image4, width=200, height=200).pack()
+
+
+class TeleBot:
+    bot = None
+    KEY = '1195857579:AAE5Lnon-hLeUxb1CvRPc1OjLLFWsGFgzFo'
+
+    @staticmethod
+    def RepresentsInt(s):
+        try: 
+            int(s)
+            return True
+        except ValueError:
+            return False
+
+    @classmethod
+    def handle(cls, msg):
+        content_type, chat_type, chat_id = telepot.glance(msg)
+        if(content_type != 'text'):
+            return
+
+        text = msg['text']
+        args = text.split(' ')
+
+        if(len(args) != 2 and len(args) != 3):
+            cls.bot.sendMessage(chat_id, '(검색시작일) (검색종료일) [결과 수]   형태로 입력해주세요.')
+            return
+
+        startDt = args[0]
+        endDt = args[1]
+        if(len(args) == 2):
+            searchCount = 1
+        else:
+            searchCount = args[2]
+
+        # args 검증
+        if(len(startDt) != 8 or len(endDt) != 8 or not TeleBot.RepresentsInt(searchCount)):
+            cls.bot.sendMessage(chat_id, '(검색시작일) (검색종료일) [결과 수]   형태로 입력해주세요.')
+            return
+
+        searchCount = int(searchCount)
+
+        responseText = RequestInfo(startDt, endDt, org_cd=None, kind_cd=None, numOfRows=searchCount)
+        root = ParseXML(responseText)
+        items = root.find('body').find('items').findall('item')
+        for item in items:
+            body = '# ' + str(items.index(item) + 1) + '/' +  str(len(items)) + '\n'
+            body += "지역 : " + item.find('orgNm').text + '\n'
+            body += "접수일 : " + item.find('happenDt').text + '\n'
+            body += "발견 장소 : " + item.find('happenPlace').text + '\n'
+            body += item.find('kindCd').text + " " + item.find('colorCd').text + " " + item.find('age').text + '\n'
+            body += "특징 : " + item.find('specialMark').text + '\n'
+            body += "보호소 : " + item.find('careNm').text + " (" + item.find('careTel').text + ")" + '\n'
+            body += "상태 : " + item.find('processState').text + '\n'
+            body += "(이미지 : " + item.find('popfile').text + ')'
+
+            cls.bot.sendMessage(chat_id, body)
+
+    def __init__(self):
+        TeleBot.bot = telepot.Bot(TeleBot.KEY)
+        TeleBot.bot.message_loop(TeleBot.handle)
+        
+
+
+
+telebot = TeleBot()
 
 window.mainloop()
