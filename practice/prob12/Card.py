@@ -54,6 +54,9 @@ class Card:
     def SetVisible(self, isVisible):
         self.isVisible = isVisible
 
+    def GetImageName(self):
+        return 'resource/doriCards/' + str(self.month) + '.' + str(self.index) + '.gif'
+
     def __str__(self):
         return str(self.month) + '월_' + str(self.index)
 
