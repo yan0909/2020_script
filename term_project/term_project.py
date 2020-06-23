@@ -161,7 +161,7 @@ def ShowData(root, isBookMark):
         guiDic[frames[i]]['careNm'].pack()
         guiDic[frames[i]]['processState'].configure(text = "상태 : " + datas[i]['processState'])
         guiDic[frames[i]]['processState'].pack()
-        guiDic[frames[i]]['map'].configure(command = lambda : OpenWeb(datas[i]['careNm']))
+        guiDic[frames[i]]['map'].configure(command = lambda : OpenWeb(datas[curTab]['careNm']))
         guiDic[frames[i]]['map'].pack()
         guiDic[frames[i]]['bookmarkSep'].pack()
         guiDic[frames[i]]['bookmark'].configure(command = lambda : AddBookMark(items[curTab]) )
