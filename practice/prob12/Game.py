@@ -2,7 +2,8 @@ from tkinter import *
 from tkinter import font
 from Card import *
 from Player import *
-import inspect
+from Sound import *
+import random
 
 class Game:
     def __init__(self):
@@ -12,15 +13,27 @@ class Game:
         self.window.configure(bg="green")
 
         self.fontstyle = font.Font(self.window, size=24, weight='bold', family='Consolas')
-        self.fontstyle2 = font.Font(self.window, size=16, weight='bold', family='Consolas')
+        self.fontstyle2 = font.Font(self.window, size=15, weight='bold', family='Consolas')
         self.fontstyle3 = font.Font(self.window, size=11, weight='bold', family='Consolas')
+
+        self.sound = Sound()
+
+        # 카드 이미지 + 월 + 조합 + 승패
+        self.images = {}
+        for i in range(10):
+            for j in range(2):
+                self.images[str(i+1) + '.' + str(j+1)] = PhotoImage(file= 'resource/doriCards/' + str(i+1) + '.' + str(j+1) + '.gif')
+        self.images['back'] = PhotoImage(file= 'resource/doriCards/cardback.gif')
+
         self.dealer = Player("dealer")
-        self.player1 = Player("player1")
-        self.player2 = Player("player2")
-        self.player3 = Player("player3")
+        self.players = []
+        self.players.append(Player("player1"))
+        self.players.append(Player("player2"))
+        self.players.append(Player("player3"))
+        self.money = 1000
 
         self.SetupGUI()
-
+        self.Initialize()
 
         l = []
         l.append(Card(16, isVisible=True))
@@ -47,155 +60,343 @@ class Game:
         stepX_little = 70
         stepX_big = 110
 
-        guiBtnBet1_5x = Button(self.window, text='5만', width=4, height=1, font=self.fontstyle2)
-        guiBtnBet1_5x.place(x=x, y=y)
+        self.guiBtnBet1_5x = Button(self.window, text='5만', width=4, height=1, font=self.fontstyle2, command=self.OnClickedBtnBet1_5x)
+        self.guiBtnBet1_5x.place(x=x, y=y)
         x += stepX_little
-        guiBtnBet1_1x = Button(self.window, text='1만', width=4, height=1, font=self.fontstyle2)
-        guiBtnBet1_1x.place(x=x, y=y)
+        self.guiBtnBet1_1x = Button(self.window, text='1만', width=4, height=1, font=self.fontstyle2, command=self.OnClickedBtnBet1_1x)
+        self.guiBtnBet1_1x.place(x=x, y=y)
         x += stepX_big
 
-        guiBtnBet2_5x = Button(self.window, text='5만', width=4, height=1, font=self.fontstyle2)
-        guiBtnBet2_5x.place(x=x, y=y)
+        self.guiBtnBet2_5x = Button(self.window, text='5만', width=4, height=1, font=self.fontstyle2, command=self.OnClickedBtnBet2_5x)
+        self.guiBtnBet2_5x.place(x=x, y=y)
         x += stepX_little
-        guiBtnBet2_1x = Button(self.window, text='1만', width=4, height=1, font=self.fontstyle2)
-        guiBtnBet2_1x.place(x=x, y=y)
+        self.guiBtnBet2_1x = Button(self.window, text='1만', width=4, height=1, font=self.fontstyle2, command=self.OnClickedBtnBet2_1x)
+        self.guiBtnBet2_1x.place(x=x, y=y)
         x += stepX_big
 
-        guiBtnBet3_5x = Button(self.window, text='5만', width=4, height=1, font=self.fontstyle2)
-        guiBtnBet3_5x.place(x=x, y=y)
+        self.guiBtnBet3_5x = Button(self.window, text='5만', width=4, height=1, font=self.fontstyle2, command=self.OnClickedBtnBet3_5x)
+        self.guiBtnBet3_5x.place(x=x, y=y)
         x += stepX_little
-        guiBtnBet3_1x = Button(self.window, text='1만', width=4, height=1, font=self.fontstyle2)
-        guiBtnBet3_1x.place(x=x, y=y)
+        self.guiBtnBet3_1x = Button(self.window, text='1만', width=4, height=1, font=self.fontstyle2, command=self.OnClickedBtnBet3_1x)
+        self.guiBtnBet3_1x.place(x=x, y=y)
         x += stepX_big
 
-        guiBtnDeal = Button(self.window, text='Deal', width=6, height=1, font=self.fontstyle2)
-        guiBtnDeal.place(x=x, y=y)
+        self.guiBtnDeal = Button(self.window, text='Deal', width=6, height=1, font=self.fontstyle2, command=self.OnClickedBtnDeal)
+        self.guiBtnDeal.place(x=x, y=y)
         x += stepX_little * 1.3
-        guiBtnAgain = Button(self.window, text='Again', width=6, height=1, font=self.fontstyle2)
-        guiBtnAgain.place(x=x, y=y)
+        self.guiBtnAgain = Button(self.window, text='Again', width=6, height=1, font=self.fontstyle2, command=self.OnClickedBtnAgain)
+        self.guiBtnAgain.place(x=x, y=y)
 
 
         # 베팅 금액
-        guiLabelBet1 = Label(self.window, text='40만', font=self.fontstyle, bg='green', fg='cyan')
-        guiLabelBet1.place(x=80, y=500)
+        self.guiLabelBet1 = Label(self.window, text='40만', font=self.fontstyle, bg='green', fg='cyan')
+        self.guiLabelBet1.place(x=80, y=500)
 
-        guiLabelBet2 = Label(self.window, text='40만', font=self.fontstyle, bg='green', fg='cyan')
-        guiLabelBet2.place(x=260, y=500)
+        self.guiLabelBet2 = Label(self.window, text='40만', font=self.fontstyle, bg='green', fg='cyan')
+        self.guiLabelBet2.place(x=260, y=500)
 
-        guiLabelBet3 = Label(self.window, text='40만', font=self.fontstyle, bg='green', fg='cyan')
-        guiLabelBet3.place(x=440, y=500)
+        self.guiLabelBet3 = Label(self.window, text='40만', font=self.fontstyle, bg='green', fg='cyan')
+        self.guiLabelBet3.place(x=440, y=500)
 
         # 보유 금액
-        guiLabelBet2 = Label(self.window, text='1130만', font=self.fontstyle, bg='green', fg='blue')
-        guiLabelBet2.place(x=630, y=450)
+        self.guiLabelMoney = Label(self.window, text='1130만', font=self.fontstyle, bg='green', fg='blue')
+        self.guiLabelMoney.place(x=630, y=450)
 
-        # 카드 이미지
-        self.images = {}
-        for i in range(10):
-            for j in range(2):
-                self.images[str(i+1) + '.' + str(j+1)] = PhotoImage(file= 'resource/doriCards/' + str(i+1) + '.' + str(j+1) + '.gif')
-        self.images['back'] = PhotoImage(file= 'resource/doriCards/cardback.gif')
+
+
+        self.guiImageCards = {} # 카드 이미지
+        self.guiLabelMonths = {} # 월
+        self.guiLabelCombos = {} # 조합명
+        self.guiLabelResults = {} # 승패
 
         x = 50
         y = 340
         cardStepX = 25
+        playerStepX = 180
+        monthLabelOffsetX = 25
+        monthLabelY = 300
+        comboLabelY = 270
+        resultLabelY = 230
+        # 플레이어 x3
+        for player in self.players:
+            # 카드 이미지
+            l = []
+            for i in range(5):
+                p = self.images[str(i+1) + '.1']
+                t = Label(self.window, image=p)
+                t.image = p
+                t.place(x=x + cardStepX * i, y=y)
+                l.append(t)
+            self.guiImageCards[player] = l
 
-        guiImageCards_Player1 = []
-        for i in range(5):
-            p = self.images[str(i+1) + '.1']
-            t = Label(self.window, image=p)
-            t.image = p
-            t.place(x=x + cardStepX * i, y=y)
-            guiImageCards_Player1.append(t)
-        x += 180
+            # 월, 조합명, 승패
+            l = []
+            for i in range(5):
+                t = Label(self.window, text='5', font=self.fontstyle2, bg='green', fg='white')
+                t.place(x=x + cardStepX * i + monthLabelOffsetX, y=monthLabelY)
+                l.append(t)
+            self.guiLabelMonths[player] = l
+            self.guiLabelCombos[player] = Label(self.window, text = '팍팍싸(8 8 4) 9땡', font=self.fontstyle3, bg='green', fg='cyan')
+            self.guiLabelCombos[player].place(x=x+monthLabelOffsetX, y=comboLabelY)
+            self.guiLabelResults[player] = Label(self.window, text='승', font=self.fontstyle, bg='green', fg='red')
+            self.guiLabelResults[player].place(x=x+monthLabelOffsetX-10, y=resultLabelY)
 
-        guiImageCards_Player1[0].image=None
-
-        guiImageCards_Player2 = []  
-        for i in range(5):
-            p = self.images[str(i+1) + '.1']
-            t = Label(self.window, image=p)
-            t.image = p
-            t.place(x=x + cardStepX * i, y=y)
-            guiImageCards_Player2.append(t)
-        x += 180
-
-        guiImageCards_Player3 = []
-        for i in range(5):
-            p = self.images[str(i+1) + '.1']
-            t = Label(self.window, image=p)
-            t.image = p
-            t.place(x=x + cardStepX * i, y=y)
-            guiImageCards_Player3.append(t)
-
-        x = 230
+            x += playerStepX
+        
+        # 딜러
+        x = 50 + playerStepX
         y = 90
-        guiImageCards_Dealer = []
+        monthLabelY = 50
+        comboLabelY = 20
+        # 카드 이미지
+        l = []
         for i in range(5):
             p = self.images[str(i+1) + '.1']
             t = Label(self.window, image=p)
             t.image = p
             t.place(x=x + cardStepX * i, y=y)
-            guiImageCards_Dealer.append(t)
+            l.append(t)
+        self.guiImageCards[self.dealer] = l
 
-
-        # 카드 라벨
-        x = 50 + 25
-        y = 300
-        stepX = 25
-        guiLabelCardMonths_Player1 = []
+        # 월, 조합명, 승패
+        l = []
         for i in range(5):
             t = Label(self.window, text='5', font=self.fontstyle2, bg='green', fg='white')
-            t.place(x=x + stepX * i, y=y)
-            guiLabelCardMonths_Player1.append(t)
-        guiLabelCombo_Player1 = Label(self.window, text = '팍팍싸(8 8 4) 9땡', font=self.fontstyle3, bg='green', fg='cyan')
-        guiLabelCombo_Player1.place(x=x, y=y-30)
-        guiLabelResult_Player1 = Label(self.window, text='승', font=self.fontstyle, bg='green', fg='red')
-        guiLabelResult_Player1.place(x=x-10, y=y-80)
-
-        x = 50 + 25 + 180
-        y = 300
-        stepX = 25
-        guiLabelCardMonths_Player2 = []
-        for i in range(5):
-            t = Label(self.window, text='5', font=self.fontstyle2, bg='green', fg='white')
-            t.place(x=x + stepX * i, y=y)
-            guiLabelCardMonths_Player2.append(t)
-        guiLabelCombo_Player2 = Label(self.window, text = '팍팍싸(8 8 4) 9땡', font=self.fontstyle3, bg='green', fg='cyan')
-        guiLabelCombo_Player2.place(x=x, y=y-30)
-        guiLabelResult_Player2 = Label(self.window, text='승', font=self.fontstyle, bg='green', fg='red')
-        guiLabelResult_Player2.place(x=x-10, y=y-80)
-
-        x = 50 + 25 + 180 + 180
-        y = 300
-        stepX = 25
-        guiLabelCardMonths_Player3 = []
-        for i in range(5):
-            t = Label(self.window, text='5', font=self.fontstyle2, bg='green', fg='white')
-            t.place(x=x + stepX * i, y=y)
-            guiLabelCardMonths_Player3.append(t)
-        guiLabelCombo_Player3 = Label(self.window, text = '팍팍싸(8 8 4) 9땡', font=self.fontstyle3, bg='green', fg='cyan')
-        guiLabelCombo_Player3.place(x=x, y=y-30)
-        guiLabelResult_Player3 = Label(self.window, text='승', font=self.fontstyle, bg='green', fg='red')
-        guiLabelResult_Player3.place(x=x-10, y=y-80)
-
-        x = 50 + 25 + 180
-        y = 50
-        stepX = 25
-        guiLabelCardMonths_Dealer = []
-        for i in range(5):
-            t = Label(self.window, text='5', font=self.fontstyle2, bg='green', fg='white')
-            t.place(x=x + stepX * i, y=y)
-            guiLabelCardMonths_Dealer.append(t)
-        guiLabelCombo_Dealer = Label(self.window, text = '팍팍싸(8 8 4) 9땡', font=self.fontstyle3, bg='green', fg='cyan')
-        guiLabelCombo_Dealer.place(x=x, y=y-30)
-
+            t.place(x=x + cardStepX * i + monthLabelOffsetX, y=monthLabelY)
+            l.append(t)
+        self.guiLabelMonths[self.dealer] = l
+        self.guiLabelCombos[self.dealer] = Label(self.window, text = '팍팍싸(8 8 4) 9땡', font=self.fontstyle3, bg='green', fg='cyan')
+        self.guiLabelCombos[self.dealer].place(x=x+monthLabelOffsetX, y=comboLabelY)
 
 
         pass
 
+    def Initialize(self):
+        self.turn = 0
+
+        # 플레이어 패 제거
+        for player in self.players + [self.dealer]:
+            player.ClearCards()
+
+        # 덱 셔플
+        self.deck = [i for i in range(20)]
+        self.deckN = 0
+        random.shuffle(self.deck)
+
+        # 베팅 머니 0원으로 초기화
+        for e in self.players:
+            e.SetBetMoney(0)
+
+        # 딜, 어게인 버튼
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.GuiSetActive(self.guiBtnAgain, False)
+
+        # 완성된 조합 초기화
+        self.combos = {}
+        for player in self.players + [self.dealer]:
+            self.combos[player] = None
+        
+        self.UpdateGUI()
+        pass
+
+    def UpdateGUI(self):
+        # self.guiBtnBet1_5x
+        # self.guiBtnDeal
+        # self.guiBtnAgain
+        # self.guiImageCards_Player1
+        # self.guiLabelCardMonths_Player1
+        # self.guiLabelCombo_Player1
+        # self.guiLabelResult_Player1
+
+        # 베팅 버튼
+        self.GuiSetActive( self.guiBtnBet1_1x, self.turn != 0 and self.turn != 3 and self.money >= 1 )
+        self.GuiSetActive( self.guiBtnBet1_5x, self.turn != 0 and self.turn != 3 and self.money >= 5 )
+        self.GuiSetActive( self.guiBtnBet2_1x, self.turn != 0 and self.turn != 3 and self.money >= 1 )
+        self.GuiSetActive( self.guiBtnBet2_5x, self.turn != 0 and self.turn != 3 and self.money >= 5 )
+        self.GuiSetActive( self.guiBtnBet3_1x, self.turn != 0 and self.turn != 3 and self.money >= 1 )
+        self.GuiSetActive( self.guiBtnBet3_5x, self.turn != 0 and self.turn != 3 and self.money >= 5 )
+
+        # 베팅 금액
+        self.GuiSetText( self.guiLabelBet1, str(self.players[0].GetBetMoney()) + '만')
+        self.GuiSetText( self.guiLabelBet2, str(self.players[1].GetBetMoney()) + '만')
+        self.GuiSetText( self.guiLabelBet3, str(self.players[2].GetBetMoney()) + '만')
+
+        # 잔액
+        self.GuiSetText( self.guiLabelMoney, str(self.money) + '만')
+
+        # Deal이랑 Again은 따로 처리
+        # ...
+
+        # 카드 이미지와 라벨
+        # 플레이어 3명
+        x = 50
+        y = 340
+        cardStepX = 25
+        playerStepX = 180
+        monthLabelOffsetX = 25
+        monthLabelY = 300
+        comboLabelY = 270
+        resultLabelY = 230
+        for player in self.players:
+            thisCombo = self.combos[player]
+            for i in range(5):
+                card = player.GetCards()[i] if len(player.GetCards()) > i else None
+
+                # 이미지 세팅 및 위치 세팅
+                if( card != None ):
+                    self.guiImageCards[player][i].configure( image = self.images[card.GetCardName()] )
+                    self.guiImageCards[player][i].image =  self.images[card.GetCardName()]
+                    self.guiImageCards[player][i].place(x= x + i * cardStepX, y = y + (20 if thisCombo != None and card in thisCombo['doriCombo'] else 0) )
+                else:
+                    self.guiImageCards[player][i].place(x=99999, y=99999)
+
+                # 월 텍스트, 컬러 및 위치 세팅
+                if( card != None ):
+                    self.guiLabelMonths[player][i].configure(text = card.GetMonth(), fg= 'orange' if thisCombo != None and card in thisCombo['doriCombo'] else 'white')
+                    self.guiLabelMonths[player][i].place(x= x + monthLabelOffsetX + i * cardStepX, y=monthLabelY)
+                else:
+                    self.guiLabelMonths[player][i].place(x=99999, y=99999)
+                
+            # 도리 정보 출력
+            self.guiLabelCombos[player].configure(text= self.GetComboString(thisCombo) if self.turn == 3 else '')
+
+            # 승패 정보 출력
+            self.guiLabelResults[player].configure(text= '' if self.turn != 3 else ( '승' if self.IsStrongerCombo(self.combos[player], self.combos[self.dealer]) else '패' ) )
+
+            x += playerStepX
+
+        # 딜러
+        x = 50 + playerStepX
+        y = 90
+        monthLabelY = 50
+        comboLabelY = 20
+        thisCombo = self.combos[self.dealer]
+        for i in range(5):
+            card = self.dealer.GetCards()[i] if len(self.dealer.GetCards()) > i else None
+
+            # 이미지 세팅 및 위치 세팅
+            if( card != None ):
+                self.guiImageCards[self.dealer][i].configure( image =  self.images[card.GetCardName()] )
+                self.guiImageCards[self.dealer][i].image =  self.images[card.GetCardName()]
+                self.guiImageCards[self.dealer][i].place(x= x + i * cardStepX, y = y + (20 if thisCombo != None and card in thisCombo['doriCombo'] else 0) )
+            else:
+                self.guiImageCards[self.dealer][i].place(x=99999, y=99999)
+
+            # 월 텍스트, 컬러 및 위치 세팅
+            if( card != None and self.turn == 3 ):
+                self.guiLabelMonths[self.dealer][i].configure(text = card.GetMonth(), fg= 'orange' if thisCombo != None and card in thisCombo['doriCombo'] else 'white')
+                self.guiLabelMonths[self.dealer][i].place(x= x + monthLabelOffsetX + i * cardStepX, y=monthLabelY)
+            else:
+                self.guiLabelMonths[self.dealer][i].place(x=99999, y=99999)
+            
+        # 도리 정보 출력
+        self.guiLabelCombos[self.dealer].configure(text= self.GetComboString(thisCombo) if self.turn == 3 else '')
+
+
+    def OnClickedBtnDeal(self):
+        self.turn += 1
+
+        if( self.turn == 1 ): # 카드 한장씩 배부
+            for player in self.players:
+                player.AddCard( self.DrawCard(isVisible=True) )
+            self.dealer.AddCard( self.DrawCard(isVisible=False) )
+        elif( self.turn == 2 ): # 카드 세장 더 배부
+            for i in range(3):
+                for player in self.players:
+                    player.AddCard( self.DrawCard(isVisible=True) )
+                self.dealer.AddCard( self.DrawCard(isVisible=False) )
+        elif(self.turn == 3 ): # 카드 한장씩 더 배부한 후 결과 산출
+            for player in self.players:
+                player.AddCard( self.DrawCard(isVisible=True) )
+            self.dealer.AddCard( self.DrawCard(isVisible=False) )
+
+            # 딜러의 패 공개
+            for card in self.dealer.GetCards():
+                card.SetVisible(True)
+
+            # 조합 결정
+            for player in self.players + [self.dealer]:
+                combos = self.GetCombos(player.GetCards()) # 가능한 조합 산출
+                if( len(combos) == 0 ): # 노메이드인 경우
+                    self.combos[player] = None
+                else:
+                    combos.sort(key= lambda x : x['power'], reverse=False) # 파워 순으로 정렬
+                    self.combos[player] = combos[0] # 가장 강한 조합 사용
+                
+                print('조합 : ' + self.GetComboString(self.combos[player]))
+            
+            # 돈 계산
+            for player in self.players:
+                if( self.IsStrongerCombo(self.combos[player], self.combos[self.dealer]) ):
+                    self.money += player.GetBetMoney() * 2
+
+            self.GuiSetActive(self.guiBtnAgain, True)
+
+        self.GuiSetActive(self.guiBtnDeal, False)    
+
+        self.UpdateGUI()
+        if( self.turn == 3):
+            self.PlaySound(Sound.SFX.WIN)
+        else:
+            self.PlaySound(Sound.SFX.DEAL)
+
+    def OnClickedBtnAgain(self):
+        self.Initialize()
+        self.PlaySound(Sound.SFX.AGAIN)
+
+    def OnClickedBtnBet1_5x(self):
+        self.players[0].AddBetMoney(5)
+        self.money -= 5
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.UpdateGUI()
+        self.PlaySound(Sound.SFX.BET)
+    def OnClickedBtnBet1_1x(self):
+        self.players[0].AddBetMoney(1)
+        self.money -= 1
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.UpdateGUI()
+        self.PlaySound(Sound.SFX.BET)
+    def OnClickedBtnBet2_5x(self):
+        self.players[1].AddBetMoney(5)
+        self.money -= 5
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.UpdateGUI()
+        self.PlaySound(Sound.SFX.BET)
+    def OnClickedBtnBet2_1x(self):
+        self.players[1].AddBetMoney(1)
+        self.money -= 1
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.UpdateGUI()
+        self.PlaySound(Sound.SFX.BET)
+    def OnClickedBtnBet3_5x(self):
+        self.players[2].AddBetMoney(5)
+        self.money -= 5
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.UpdateGUI()
+        self.PlaySound(Sound.SFX.BET)
+    def OnClickedBtnBet3_1x(self):
+        self.players[2].AddBetMoney(1)
+        self.money -= 1
+        self.GuiSetActive(self.guiBtnDeal, True)
+        self.UpdateGUI()
+        self.PlaySound(Sound.SFX.BET)
+
+    def DrawCard(self, isVisible):
+        cardIndex = self.deck[self.deckN]
+        self.deckN += 1
+        return Card(cardIndex, isVisible)
+
+    def IsStrongerCombo(self, mine, opponent):
+        if(mine == None):
+            return False
+        if(opponent == None):
+            return True
+        return mine['power'] < opponent['power']
+
     # 콤보 텍스트 반환
     def GetComboString(self, combo):
+        if( combo == None ):
+            return '노메이드'
         return self.GetDoriName( combo['doriCombo'] ) + ' ' + self.GetPowerName( combo['power'] )
 
     # 가능한 도리짓기 조합 리스트를 인덱스로 반환한다. 형태 : [set(1,2,3), set(1,3,5)]
@@ -291,6 +492,9 @@ class Game:
 
     # 도리짓기 조합의 이름 반환
     def GetDoriName(self, doriCards):
+        if(doriCards == None):
+            return '노메이드'
+
         doriCards.sort(key= lambda x : x.GetMonth())
 
         nameDic = {}
@@ -328,6 +532,9 @@ class Game:
 
     # 조합의 이름 반환
     def GetPowerName(self, power):
+        if(power == None ):
+            return ''
+
         if(power == Card.삼팔광땡):
             return '삼팔광땡'
         if(power == Card.일팔광땡):
@@ -393,7 +600,7 @@ class Game:
         if(power == Card.멍텅구리구사):
             return '멍텅구리구사'
 
-        return '노메이드'
+        return '#버그#'
 
     # 도리를 짓고 족보를 찾아 리스트로 반환한다. 형태 : [{'doriCombo': [Card, Card, Card]], 'power': Card.팔땡}, {'doriCombo': [Card, Card, Card], 'power': Card.구사}]
     def GetCombos(self, cards):
@@ -421,6 +628,10 @@ class Game:
     def GuiSetImage(self, control, p):
         control.configure(image = p)
         control.image = p
+    
+    def PlaySound(self, sfx):
+        self.sound.PlaySound(sfx)
+        pass
 
     pass
 

@@ -10,6 +10,9 @@ class Player:
 
     def AddCard(self, card):
         self.cards.append(card)
+
+    def ClearCards(self):
+        self.cards = []
     
     def AddBetMoney(self, bet):
         self.betMoney += bet

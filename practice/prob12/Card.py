@@ -54,8 +54,15 @@ class Card:
     def SetVisible(self, isVisible):
         self.isVisible = isVisible
 
-    def GetImageName(self):
-        return 'resource/doriCards/' + str(self.month) + '.' + str(self.index) + '.gif'
+    def GetCardName(self):
+        if( not self.isVisible ):
+            return 'back'
+        return str(self.month) + '.' + str(self.index)
+
+    def __eq__(self, other):
+        if( other == None ):
+            return False
+        return self.GetCardIndex() == other.GetCardIndex()
 
     def __str__(self):
         return str(self.month) + '월_' + str(self.index)
